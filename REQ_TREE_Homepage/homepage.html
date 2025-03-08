@@ -11,13 +11,13 @@
 
     <!-- Bootstrap core CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js" integrity="sha512-vc58qvvBdrDR4etbxMdlTt4GBQk1qjvyORR2nrsPsFPyrs+/u5c3+1Ct6upOgdZoIl7eq6k3a1UPDSNAQi/32A==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
     <!-- Custom styles for this template -->
     <link href="./dashboard.css" rel="stylesheet">
   </head>
 
   <body>
-    <!--<nav class="navbar navbar-dark sticky-top bg-dark flex-md-nowrap p-0">
+    <nav class="navbar navbar-dark sticky-top bg-dark flex-md-nowrap p-0">
       <a class="navbar-brand col-sm-3 col-md-2 mr-0" href="#">Company name</a>
       <input class="form-control form-control-dark w-100" type="text" placeholder="Search" aria-label="Search">
       <ul class="navbar-nav px-3">
@@ -25,7 +25,7 @@
           <a class="nav-link" href="#">Sign out</a>
         </li>
       </ul>
-    </nav>-->
+    </nav>
 
     <div class="container-fluid">
       <div class="row">
@@ -119,8 +119,8 @@
               </button>
             </div>
           </div>
-            <div id="graph-container" style="width: 500px; height: 300px;"></div>
 
+          <canvas class="my-4" id="myChart" width="900" height="380"></canvas>
 
           <h2>Section title</h2>
           <div class="table-responsive">
@@ -271,58 +271,33 @@
     <!-- Graphs -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.1/Chart.min.js"></script>
     <script>
-    // Data for the bar chart
-        const data = [30, 80, 45, 60, 20, 90, 55, 120];
-
-        // Set up the SVG dimensions
-        const width = 500;
-        const height = 300;
-        const margin = { top: 20, right: 20, bottom: 40, left: 40 };
-
-        // Select the container div by its ID and append the SVG element
-        const svg = d3.select("#graph-container")  // Select the div with id "graph-container"
-        .append("svg")  // Append an SVG element to it
-        .attr("width", width)
-        .attr("height", height);
-
-        // Create a scale for the x-axis (index of data)
-        const x = d3.scaleBand()
-        .domain(d3.range(data.length))
-        .range([margin.left, width - margin.right])
-        .padding(0.1);
-
-        // Create a scale for the y-axis (data values)
-        const y = d3.scaleLinear()
-        .domain([0, d3.max(data)])
-        .nice()
-        .range([height - margin.bottom, margin.top]);
-
-        // Append bars to the SVG
-        svg.selectAll(".bar")
-        .data(data)
-        .enter().append("rect")
-        .attr("class", "bar")
-        .attr("x", (d, i) => x(i))
-        .attr("y", d => y(d))
-        .attr("width", x.bandwidth())
-        .attr("height", d => height - margin.bottom - y(d));
-
-        // Add x-axis labels
-        svg.append("g")
-        .selectAll(".x-axis")
-        .data(data)
-        .enter().append("text")
-        .attr("class", "axis-label")
-        .attr("x", (d, i) => x(i) + x.bandwidth() / 2)
-        .attr("y", height - margin.bottom + 15)
-        .attr("text-anchor", "middle")
-        .text((d, i) => i);
-
-        // Add y-axis
-        svg.append("g")
-        .attr("class", "y-axis")
-        .attr("transform", `translate(${margin.left}, 0)`)
-        .call(d3.axisLeft(y).ticks(5));
+      var ctx = document.getElementById("myChart");
+      var myChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+          datasets: [{
+            data: [15339, 21345, 18483, 24003, 23489, 24092, 12034],
+            lineTension: 0,
+            backgroundColor: 'transparent',
+            borderColor: '#007bff',
+            borderWidth: 4,
+            pointBackgroundColor: '#007bff'
+          }]
+        },
+        options: {
+          scales: {
+            yAxes: [{
+              ticks: {
+                beginAtZero: false
+              }
+            }]
+          },
+          legend: {
+            display: false,
+          }
+        }
+      });
     </script>
   </body>
 </html>
