@@ -14,6 +14,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js" integrity="sha512-vc58qvvBdrDR4etbxMdlTt4GBQk1qjvyORR2nrsPsFPyrs+/u5c3+1Ct6upOgdZoIl7eq6k3a1UPDSNAQi/32A==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <!-- Custom styles for this template -->
     <link href="./dashboard.css" rel="stylesheet">
+    
   </head>
 
   <body>
@@ -270,59 +271,111 @@
 
     <!-- Graphs -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.1/Chart.min.js"></script>
-    <script>
-    // Data for the bar chart
-        const data = [30, 80, 45, 60, 20, 90, 55, 120];
+  <script>
+    // Sample data for nodes and links
+    const data = {
+      nodes: [
+        {id: "A", group: 1},
+        {id: "B", group: 2},
+        {id: "C", group: 1},
+        {id: "D", group: 3},
+        {id: "E", group: 2}
+      ],
+      links: [
+        {source: "A", target: "B", value: 1},
+        {source: "A", target: "C", value: 2},
+        {source: "B", target: "D", value: 3},
+        {source: "C", target: "E", value: 4}
+      ]
+    };
 
-        // Set up the SVG dimensions
-        const width = 500;
-        const height = 300;
-        const margin = { top: 20, right: 20, bottom: 40, left: 40 };
+    // Specify the dimensions of the chart.
+    const width = 928;
+    const height = 680;
 
-        // Select the container div by its ID and append the SVG element
-        const svg = d3.select("#graph-container")  // Select the div with id "graph-container"
-        .append("svg")  // Append an SVG element to it
-        .attr("width", width)
-        .attr("height", height);
+    // Specify the color scale.
+    const color = d3.scaleOrdinal(d3.schemeCategory10);
 
-        // Create a scale for the x-axis (index of data)
-        const x = d3.scaleBand()
-        .domain(d3.range(data.length))
-        .range([margin.left, width - margin.right])
-        .padding(0.1);
+    // The force simulation mutates links and nodes, so create a copy
+    const links = data.links.map(d => ({...d}));
+    const nodes = data.nodes.map(d => ({...d}));
 
-        // Create a scale for the y-axis (data values)
-        const y = d3.scaleLinear()
-        .domain([0, d3.max(data)])
-        .nice()
-        .range([height - margin.bottom, margin.top]);
+    // Create a simulation with several forces.
+    const simulation = d3.forceSimulation(nodes)
+      .force("link", d3.forceLink(links).id(d => d.id))
+      .force("charge", d3.forceManyBody())
+      .force("x", d3.forceX())
+      .force("y", d3.forceY());
 
-        // Append bars to the SVG
-        svg.selectAll(".bar")
-        .data(data)
-        .enter().append("rect")
-        .attr("class", "bar")
-        .attr("x", (d, i) => x(i))
-        .attr("y", d => y(d))
-        .attr("width", x.bandwidth())
-        .attr("height", d => height - margin.bottom - y(d));
+    // Create the SVG container.
+    const svg = d3.create("svg")
+      .attr("width", width)
+      .attr("height", height)
+      .attr("viewBox", [-width / 2, -height / 2, width, height])
+      .attr("style", "max-width: 100%; height: auto;");
 
-        // Add x-axis labels
-        svg.append("g")
-        .selectAll(".x-axis")
-        .data(data)
-        .enter().append("text")
-        .attr("class", "axis-label")
-        .attr("x", (d, i) => x(i) + x.bandwidth() / 2)
-        .attr("y", height - margin.bottom + 15)
-        .attr("text-anchor", "middle")
-        .text((d, i) => i);
+    // Add a line for each link, and a circle for each node.
+    const link = svg.append("g")
+      .attr("stroke", "#999")
+      .attr("stroke-opacity", 0.6)
+      .selectAll("line")
+      .data(links)
+      .join("line")
+      .attr("stroke-width", d => Math.sqrt(d.value));
 
-        // Add y-axis
-        svg.append("g")
-        .attr("class", "y-axis")
-        .attr("transform", `translate(${margin.left}, 0)`)
-        .call(d3.axisLeft(y).ticks(5));
-    </script>
+    const node = svg.append("g")
+      .attr("stroke", "#fff")
+      .attr("stroke-width", 1.5)
+      .selectAll("circle")
+      .data(nodes)
+      .join("circle")
+      .attr("r", 5)
+      .attr("fill", d => color(d.group));
+
+    node.append("title")
+      .text(d => d.id);
+
+    // Add a drag behavior.
+    node.call(d3.drag()
+        .on("start", dragstarted)
+        .on("drag", dragged)
+        .on("end", dragended));
+
+    // Set the position attributes of links and nodes each time the simulation ticks.
+    simulation.on("tick", () => {
+      link
+        .attr("x1", d => d.source.x)
+        .attr("y1", d => d.source.y)
+        .attr("x2", d => d.target.x)
+        .attr("y2", d => d.target.y);
+
+      node
+        .attr("cx", d => d.x)
+        .attr("cy", d => d.y);
+    });
+
+    // Reheat the simulation when drag starts, and fix the subject position.
+    function dragstarted(event) {
+      if (!event.active) simulation.alphaTarget(0.3).restart();
+      event.subject.fx = event.subject.x;
+      event.subject.fy = event.subject.y;
+    }
+
+    // Update the subject (dragged node) position during drag.
+    function dragged(event) {
+      event.subject.fx = event.x;
+      event.subject.fy = event.y;
+    }
+
+    // Restore the target alpha so the simulation cools after dragging ends.
+    function dragended(event) {
+      if (!event.active) simulation.alphaTarget(0);
+      event.subject.fx = null;
+      event.subject.fy = null;
+    }
+
+    // Append the SVG to the #graph-container div
+    document.getElementById('graph-container').appendChild(svg.node());
+  </script>
   </body>
 </html>
